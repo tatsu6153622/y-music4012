@@ -1,0 +1,111 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'iosApp/**'
+      - 'iosAppKotlin/**'
+      - 'commonUi/**'
+      - 'mse/**'
+      - 'quickjs/**'
+      - '.github/workflows/build-ios.yml'
+
+jobs:
+  build-ipa:
+    name: Build iOS IPA
+    runs-on: macos-15
+    steps:
+      - name: Checkout YMusicV4
+        uses: actions/checkout@v4
+        with:
+          path: YMusicV4
+
+      - name: Checkout ffmpeg-build
+        uses: actions/checkout@v4
+        with:
+          repository: ymusic-io/ffmpeg-build
+          ref: 5b3bb3beafd31b51b8a2067a4b79c8e4f00afc4b
+          path: ffmpeg-build
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Select Xcode 16.2
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.2.app/Contents/Developer || sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer || true
+          sudo killall -9 com.apple.CoreSimulator.CoreSimulatorService || true
+          xcodebuild -version
+
+      - name: Configure Gradle & Permissions
+        run: |
+          chmod +x YMusicV4/gradlew
+          chmod -R +x ffmpeg-build/scripts || true
+          mkdir -p ~/.gradle
+          echo "org.gradle.jvmargs=-Xmx6g -XX:+UseG1GC" >> ~/.gradle/gradle.properties
+          echo "kotlin.daemon.jvmargs=-Xmx4g" >> ~/.gradle/gradle.properties
+
+      - name: Build iOS FFmpeg
+        working-directory: ffmpeg-build
+        run: |
+          scripts/build-ios.sh iphoneos
+          echo "FFmpeg output directories:"
+          ls -la out/ || true
+          if [ -d "out/iphoneos" ] && [ ! -d "out/ios-arm64" ]; then
+            ln -s iphoneos out/ios-arm64
+          fi
+
+      - name: Install xcodeproj gem & generate project
+        working-directory: YMusicV4/iosApp
+        run: |
+          sudo gem install xcodeproj
+          ruby gen_xcodeproj.rb
+
+      - name: Build Xcode Project (Unsigned Debug for iPhoneOS)
+        working-directory: YMusicV4/iosApp
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME }}
+        run: |
+          xcodebuild build \
+            -project iosApp.xcodeproj \
+            -scheme iosApp \
+            -configuration Debug \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package .app into .ipa
+        working-directory: YMusicV4/iosApp
+        run: |
+          mkdir -p ipa_out/Payload
+          APP_PATH=$(find build/Build/Products -name "*.app" | head -n 1)
+          echo "Found app at: $APP_PATH"
+          # Directly copy app icon so iPad gets the icon without needing actool
+          if [ -f "Assets.xcassets/AppIcon.appiconset/AppIcon.png" ]; then
+            cp "Assets.xcassets/AppIcon.appiconset/AppIcon.png" "$APP_PATH/AppIcon60x60@2x.png" || true
+            cp "Assets.xcassets/AppIcon.appiconset/AppIcon.png" "$APP_PATH/AppIcon76x76@2x~ipad.png" || true
+          fi
+          cp -R "$APP_PATH" ipa_out/Payload/
+          cd ipa_out
+          zip -yr ../YMusic-iPad.ipa Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YMusic-iPad-IPA
+          path: YMusicV4/iosApp/YMusic-iPad.ipa
+          retention-days: 7
