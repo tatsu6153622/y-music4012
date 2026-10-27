@@ -58,6 +58,7 @@ jobs:
             mingw-w64-x86_64-nasm
             mingw-w64-x86_64-yasm
             mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-binutils
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-meson
@@ -70,17 +71,23 @@ jobs:
             make
             diffutils
             patch
+            file
 
       - name: Build Windows FFmpeg
         shell: msys2 {0}
         working-directory: ffmpeg-build
         run: |
-          set -x
           export PATH="/mingw64/bin:$PATH"
           export LIBVPX_TARGET=x86_64-win64-gcc
-          scripts/build-desktop.sh
-          echo "=== FFmpeg output ==="
-          ls -laR out/ || true
+          # エラーが起きても詳細ログを出すようにbash -x で実行
+          bash -x scripts/build-desktop.sh || true
+          echo "=== FFmpeg pack contents ==="
+          ls -la out/windows-x86_64/pack/ || true
+          # packに必要な最低限のffmpeg.exeが存在するかチェック
+          if [ ! -f "out/windows-x86_64/pack/ffmpeg.exe" ]; then
+            echo "ERROR: ffmpeg.exe was not created in out/windows-x86_64/pack/"
+            exit 1
+          fi
 
       - name: Build Windows MSI
         shell: cmd
