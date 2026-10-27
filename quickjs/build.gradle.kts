@@ -33,9 +33,9 @@ fun sdkPath(sdk: String): String =
 fun clangArch(targetName: String): List<String> = when (targetName) {
     "macosX64" -> listOf("-arch", "x86_64")
     "macosArm64" -> listOf("-arch", "arm64")
-    "iosX64" -> listOf("-arch", "x86_64", "-isysroot", sdkPath("iphonesimulator"), "-mios-simulator-version-min=12.0")
-    "iosSimulatorArm64" -> listOf("-arch", "arm64", "-isysroot", sdkPath("iphonesimulator"), "-mios-simulator-version-min=12.0")
-    "iosArm64" -> listOf("-arch", "arm64", "-isysroot", sdkPath("iphoneos"), "-miphoneos-version-min=12.0")
+    "iosX64" -> listOf("-arch", "x86_64", "-isysroot", sdkPath("iphonesimulator"), "-mios-simulator-version-min=15.0")
+    "iosSimulatorArm64" -> listOf("-arch", "arm64", "-isysroot", sdkPath("iphonesimulator"), "-mios-simulator-version-min=15.0")
+    "iosArm64" -> listOf("-arch", "arm64", "-isysroot", sdkPath("iphoneos"), "-miphoneos-version-min=15.0")
     else -> emptyList() // linuxX64: host clang on a Linux builder
 }
 
@@ -115,7 +115,7 @@ kotlin {
 
     // Same QuickJS cinterop for every native target (host-gated). The per-target static lib is
     // embedded INTO the cinterop klib (konan `included/…`), so it propagates to consumers
-    // automatically  Ea downstream module links it with no linkerOpts of its own. (This is how
+    // automatically — a downstream module links it with no linkerOpts of its own. (This is how
     // quickjs-kt ships: its klib carries `default/targets/<t>/included/libquickjs_<t>.a`.)
     val configureQuickJs: org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget.() -> Unit = {
         val targetName = name
@@ -169,7 +169,7 @@ kotlin {
     }
 }
 
-// (The static lib now rides inside the cinterop klib  Esee configureQuickJs  Eso the final link
+// (The static lib now rides inside the cinterop klib — see configureQuickJs — so the final link
 // picks it up automatically, and cinterop's inputs.file tracks it for rebuilds. No per-link wiring.)
 
 // ---------------------------------------------------------------------------------------------
@@ -189,7 +189,7 @@ val javaHomeForJni: String = run {
 }
 
 // Without an explicit deployment target, the MachO header records the BUILD HOST's SDK as the
-// minimum OS  Ea lib built here refused to load on anything below macOS 14.8. 11.0 is Compose
+// minimum OS — a lib built here refused to load on anything below macOS 14.8. 11.0 is Compose
 // Desktop's own floor (and the first Apple-silicon release).
 val macDeploymentTarget = "11.0"
 
@@ -224,7 +224,8 @@ tasks.withType<Test>().configureEach {
 
 // Bundle the built lib into the jvm jar as a resource under jni/<os>_<arch>/, so any consumer that
 // `implementation(project(":quickjs"))`s it gets the lib on their classpath and the loader extracts
-// it (see Loader.jvm.kt). CMake builds only the *current* host, so only the host folder is filled  E// shipping every desktop arch would need cross-compilation (as quickjs-kt/Zipline do with Zig).
+// it (see Loader.jvm.kt). CMake builds only the *current* host, so only the host folder is filled —
+// shipping every desktop arch would need cross-compilation (as quickjs-kt/Zipline do with Zig).
 val hostJniFolder: String = run {
     val os = System.getProperty("os.name").lowercase()
     val arch = System.getProperty("os.arch").lowercase()
@@ -301,7 +302,7 @@ tasks.matching {
 }.configureEach { dependsOn(stageAndroidJni) }
 
 // ---------------------------------------------------------------------------------------------
-// Test engine JS: this module ships NO JS  EQuickJsRuntime.create requires the caller to supply
+// Test engine JS: this module ships NO JS — QuickJsRuntime.create requires the caller to supply
 // the script (the :engine-js bundle). Only the TESTS need one, so the :engine-js TEST bundle
 // (production + fixtures) is embedded, escape-only, into a commonTest const.
 // ---------------------------------------------------------------------------------------------
@@ -322,7 +323,8 @@ val generateTestEngineJs by tasks.registering {
             .replace("\\", "\\\\").replace("\"", "\\\"")
             .replace("\$", "\${'\$'}").replace("\r", "\\r").replace("\n", "\\n").replace("\t", "\\t")
         val bundle = testEngineJs.singleFile.readText()
-        // A JVM string constant is capped at 65535 UTF-8 BYTES, and the test bundle passed that  E        // so it ships as chunks concatenated at class-init (same scheme as :dynamic-engine's
+        // A JVM string constant is capped at 65535 UTF-8 BYTES, and the test bundle passed that —
+        // so it ships as chunks concatenated at class-init (same scheme as :dynamic-engine's
         // embedBundle). Chunks are cut on char boundaries that never split a surrogate pair, and
         // sized in bytes for the worst-case encoding.
         val chunks = mutableListOf<String>()
@@ -341,7 +343,7 @@ val generateTestEngineJs by tasks.registering {
             """
             |package io.ymusic.quickjs
             |
-            |// GENERATED  Edo not edit. The :engine-js bundle, for tests only.
+            |// GENERATED — do not edit. The :engine-js bundle, for tests only.
             |${parts.joinToString("\n|")}
             |
             |internal val TEST_ENGINE_JS: String = ${chunks.indices.joinToString(" + ") { "TEST_ENGINE_JS_$it" }}
