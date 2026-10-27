@@ -87,7 +87,7 @@ kotlin {
         jvmTest.dependencies {
             implementation(Libs.SqlDelight.sqliteDriver)
         }
-        val nativeTest by getting {
+        val nativeTest = sourceSets.findByName("nativeTest") {
             dependencies {
                 implementation(Libs.SqlDelight.nativeDriver)
             }

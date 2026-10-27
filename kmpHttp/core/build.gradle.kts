@@ -151,7 +151,7 @@ kotlin {
 
         // Shared non-JVM test code (mirrors nonJvmMain: commonTest <- nonJvmTest <- nativeTest).
         val nonJvmTest by creating { dependsOn(commonTest) }
-        val nativeTest by getting { dependsOn(nonJvmTest) }
+        sourceSets.findByName("nativeTest")?.dependsOn(nonJvmTest)
 
         // Desktop-native test source set: re-runs the shared SslTest against the explicit
         // CurlKmpHttpClient (so curl SSL is exercised on macOS too, not just Linux).

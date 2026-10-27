@@ -65,7 +65,7 @@ kotlin {
 
         // In-memory SQLite drivers for the SegmentIndex tests (JVM = JDBC, native = sqliter).
         jvmTest.dependencies { implementation(Libs.SqlDelight.sqliteDriver) }
-        val nativeTest by getting {
+        val nativeTest = sourceSets.findByName("nativeTest") {
             dependencies { implementation(Libs.SqlDelight.nativeDriver) }
         }
     }

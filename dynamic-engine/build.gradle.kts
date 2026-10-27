@@ -94,7 +94,7 @@ kotlin {
             implementation(Libs.SqlDelight.sqliteDriver)
             implementation(project(":yt-media"))
         }
-        val nativeTest by getting {
+        val nativeTest = sourceSets.findByName("nativeTest") {
             dependencies {
                 implementation(Libs.SqlDelight.nativeDriver)
                 implementation(kotlin("test"))
