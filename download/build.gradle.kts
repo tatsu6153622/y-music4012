@@ -49,7 +49,7 @@ kotlin {
             api(Libs.SqlDelight.runtime)
         }
 
-        val nativeMain by getting {
+        sourceSets.findByName("nativeMain")?.apply {
             dependencies { implementation(Libs.SqlDelight.nativeDriver) }
         }
         jvmMain.dependencies { implementation(Libs.SqlDelight.sqliteDriver) }

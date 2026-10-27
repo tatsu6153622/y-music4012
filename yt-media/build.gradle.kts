@@ -52,7 +52,7 @@ kotlin {
 
         // Platform SqlDelight drivers (jvm = JDBC, android = AndroidSqliteDriver, apple/linux = sqliter),
         // same split as :dynamic-engine's DiskCacheStore.
-        val nativeMain by getting {
+        sourceSets.findByName("nativeMain")?.apply {
             dependencies { implementation(Libs.SqlDelight.nativeDriver) }
         }
         jvmMain.dependencies { implementation(Libs.SqlDelight.sqliteDriver) }
