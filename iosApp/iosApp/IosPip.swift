@@ -23,7 +23,7 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
             forName: UIApplication.willResignActiveNotification,
             object: nil,
             queue: .main
-    ) { [weak self] _ in
+        ) { [weak self] _ in
             self?.startIfEligible()
         }
     }
@@ -48,7 +48,7 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
             let source = AVPictureInPictureController.ContentSource(
                 sampleBufferDisplayLayer: layer,
                 playbackDelegate: self
-    )
+            )
             let pip = AVPictureInPictureController(contentSource: source)
             pip.delegate = self
             pip.requiresLinearPlayback = false
@@ -227,7 +227,7 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
                 allocator: kCFAllocatorDefault,
                 sourceClock: CMClockGetHostTimeClock(),
                 timebaseOut: &tb
-    )
+            )
             if let tb {
                 CMTimebaseSetRate(tb, rate: 0)
                 layer.controlTimebase = tb
