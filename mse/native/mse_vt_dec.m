@@ -171,7 +171,7 @@ void *mse_vt_dec_open(const uint8_t *avcc, int avcc_n, int w, int h)
         return NULL;
     }
     /* AVSampleBufferDisplayLayer needs IOSurface-backed NV12. NULL dest
-       lets software VT emit planar 420 with no IOSurface ↁEenqueue
+       lets software VT emit planar 420 with no IOSurface → enqueue
        succeeds, picture stays black (61 fps, empty view). */
     if (vt_create_session(d) < 0) {
         CFRelease(d->fmt);
@@ -203,11 +203,18 @@ void *mse_vt_dec_open_vp9(const uint8_t *vpcc, int vpcc_n, int w, int h)
         vpcc = syn;
         vpcc_n = 12;
     }
-    if (__builtin_available(macOS 11.0, iOS 14.0, *)) {
+#if TARGET_OS_OSX
+    if (__builtin_available(macOS 11.0, *)) {
         VTRegisterSupplementalVideoDecoderIfAvailable(kCMVideoCodecType_VP9);
         mse_critf(MSE_LOG_INFO, "mse-v vt-dec vp9 hw=%d",
                  (int)VTIsHardwareDecodeSupported(kCMVideoCodecType_VP9));
     }
+#else
+    if (__builtin_available(iOS 14.0, tvOS 14.0, *)) {
+        mse_critf(MSE_LOG_INFO, "mse-v vt-dec vp9 hw=%d",
+                 (int)VTIsHardwareDecodeSupported(kCMVideoCodecType_VP9));
+    }
+#endif
     d = calloc(1, sizeof(*d));
     if (!d)
         return NULL;

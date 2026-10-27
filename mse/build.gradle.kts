@@ -22,15 +22,15 @@ fun mseClangArch(targetName: String): List<String> = when (targetName) {
     "macosArm64" -> listOf("-arch", "arm64")
     "iosX64" -> listOf(
         "-arch", "x86_64", "-isysroot", mseSdkPath("iphonesimulator"),
-        "-mios-simulator-version-min=12.0",
+        "-mios-simulator-version-min=15.0",
     )
     "iosSimulatorArm64" -> listOf(
         "-arch", "arm64", "-isysroot", mseSdkPath("iphonesimulator"),
-        "-mios-simulator-version-min=12.0",
+        "-mios-simulator-version-min=15.0",
     )
     "iosArm64" -> listOf(
         "-arch", "arm64", "-isysroot", mseSdkPath("iphoneos"),
-        "-miphoneos-version-min=12.0",
+        "-miphoneos-version-min=15.0",
     )
     else -> emptyList()
 }
@@ -58,11 +58,7 @@ fun registerMseNativeLib(targetName: String): TaskProvider<Exec> {
     val ffmpeg = ffmpegIosPrefix(targetName)
     val qjsInc = rootProject.projectDir.resolve("quickjs/native")
     val task = tasks.register<Exec>(taskName) {
-        // `*.o` / `ar r` would otherwise pick up a previous variant's objects (stub vs ffmpeg).
-        doFirst {
-            out.deleteRecursively()
-            out.mkdirs()
-        }
+        doFirst { out.mkdirs() }
         inputs.dir(mseNativeSrc)
         if (ffmpeg != null) {
             inputs.dir(File(ffmpeg, "include"))
@@ -77,13 +73,13 @@ fun registerMseNativeLib(targetName: String): TaskProvider<Exec> {
                 .joinToString(" ") { "'${mseNativeSrc.resolve(it)}'" }
             val objc = listOf("mse_vt_layer.m", "mse_vt_dec.m")
                 .joinToString(" ") { "'${mseNativeSrc.resolve(it)}'" }
-            "set -e; cc $arch -O2 -w -DPRODUCTION=$productionC -c $srcs " +
+            "set -ex; cc $arch -O2 -Wno-unguarded-availability-new -DPRODUCTION=$productionC -c $srcs " +
                 "-I'${mseNativeSrc.absolutePath}' -I'${qjsInc.absolutePath}' " +
                 "-I'${File(ffmpeg, "include").absolutePath}' && " +
-                "cc $arch -O2 -w -fobjc-arc -DPRODUCTION=$productionC -c $objc " +
+                "cc $arch -O2 -fobjc-arc -Wno-unguarded-availability-new -DPRODUCTION=$productionC -c $objc " +
                 "-I'${mseNativeSrc.absolutePath}' && ar rcs libmsehost.a *.o"
         } else {
-            "set -e; cc $arch -O2 -w -c '${mseNativeSrc.resolve("mse_stub.c")}' " +
+            "set -ex; cc $arch -O2 -c '${mseNativeSrc.resolve("mse_stub.c")}' " +
                 "-I'${mseNativeSrc.absolutePath}' && ar rcs libmsehost.a *.o"
         }
         commandLine("bash", "-c", cmd)
