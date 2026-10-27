@@ -1,16 +1,9 @@
-ï»¿name: Build Windows MSI
+name: Build Windows MSI
 
 on:
   workflow_dispatch:
   push:
     branches: [ main, master ]
-    paths:
-      - 'desktopApp/**'
-      - 'commonUi/**'
-      - 'mse/**'
-      - 'quickjs/**'
-      - 'engine-js/**'
-      - '.github/workflows/build-windows.yml'
 
 jobs:
   build-windows-msi:
@@ -79,11 +72,11 @@ jobs:
         run: |
           export PATH="/mingw64/bin:$PATH"
           export LIBVPX_TARGET=x86_64-win64-gcc
-          # ã‚¨ãƒ©ãƒ¼ãŒèµ·ãã¦ã‚‚è©³ç´°ãƒ­ã‚°ã‚’å‡ºã™ã‚ˆã†ã«bash -x ã§å®Ÿè¡Œ
+          # ƒGƒ‰[‚ª‹N‚«‚Ä‚àÚ×ƒƒO‚ğo‚·‚æ‚¤‚Ébash -x ‚ÅÀs
           bash -x scripts/build-desktop.sh || true
           echo "=== FFmpeg pack contents ==="
           ls -la out/windows-x86_64/pack/ || true
-          # packã«å¿…è¦ãªæœ€ä½é™ã®ffmpeg.exeãŒå­˜åœ¨ã™ã‚‹ã‹ãƒã‚§ãƒƒã‚¯
+          # pack‚É•K—v‚ÈÅ’áŒÀ‚Ìffmpeg.exe‚ª‘¶İ‚·‚é‚©ƒ`ƒFƒbƒN
           if [ ! -f "out/windows-x86_64/pack/ffmpeg.exe" ]; then
             echo "ERROR: ffmpeg.exe was not created in out/windows-x86_64/pack/"
             exit 1
