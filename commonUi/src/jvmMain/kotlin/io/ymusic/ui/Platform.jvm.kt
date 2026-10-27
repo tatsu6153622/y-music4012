@@ -1,0 +1,35 @@
+package io.ymusic.ui
+
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+
+internal actual val platformUsesTouch: Boolean = false
+
+internal actual val desktopLayoutHole: Boolean = true
+
+@Composable
+internal actual fun PlatformBackHandler(enabled: Boolean, onBack: () -> Unit) {
+    // No system back concept on desktop; navigation uses the in-app back arrows.
+}
+
+@Composable
+internal actual fun SyncSystemBars(dark: Boolean) {
+    // Desktop windows carry no app-tinted OS chrome.
+}
+
+@Composable
+internal actual fun SyncSensorRotation(locked: Boolean) = Unit
+
+internal actual val rotationLockSupported: Boolean = false
+
+@Composable
+internal actual fun SyncImmersiveSystemBars(immersive: Boolean) = Unit
+
+@Composable
+internal actual fun KeepScreenOn(enabled: Boolean) = Unit
+
+@Composable
+internal actual fun Modifier.keepBelowStatusBar(): Modifier = this
+
+@Composable
+internal actual fun Modifier.drawerEdgeGestureExclusion(enabled: Boolean): Modifier = this

@@ -1,0 +1,72 @@
+-- A bucket is a folder. Hierarchy via the self-referencing parentId (root buckets have NULL).
+-- Identified externally by its uri (UNIQUE); id is a generated surrogate key.
+CREATE TABLE bucket (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    parentId  INTEGER REFERENCES bucket(id) ON DELETE CASCADE,
+    uri       TEXT    NOT NULL UNIQUE,
+    name      TEXT    NOT NULL,
+    aliasName TEXT,
+    deleted   INTEGER NOT NULL DEFAULT 0,   -- soft-delete tombstone (0/1)
+    excluded  INTEGER NOT NULL DEFAULT 0,   -- user-excluded folder (0/1); its subtree is skipped by
+                                            -- scans and hidden from the library, but the row is kept
+                                            -- so the folder still shows (greyed) and can be re-included
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+CREATE INDEX bucket_parentId ON bucket(parentId);
+
+insertBucket:
+INSERT INTO bucket(parentId, uri, name, aliasName, deleted, createdAt, updatedAt)
+VALUES (?, ?, ?, ?, 0, ?, ?);
+
+lastInsertRowId:
+SELECT last_insert_rowid();
+
+-- Full update (also un-deletes: used by upsert when a previously-removed folder reappears).
+-- A null parentId keeps the existing parent only while that parent is live: a single-folder rescan
+-- under a live root keeps its place, but a folder re-added after its ancestor was removed becomes a
+-- root instead of reviving under a deleted parent, where no root-down query would ever reach it.
+updateBucket:
+UPDATE bucket SET
+    parentId = COALESCE(?, (SELECT p.id FROM bucket AS p WHERE p.id = bucket.parentId AND p.deleted = 0)),
+    name = ?, aliasName = ?, deleted = 0, updatedAt = ?
+WHERE id = ?;
+
+setBucketAlias:
+UPDATE bucket SET aliasName = ?, updatedAt = ? WHERE id = ?;
+
+setBucketDeleted:
+UPDATE bucket SET deleted = ?, updatedAt = ? WHERE id = ?;
+
+-- Set the exclude flag for one bucket. The store applies it over the whole subtree (a folder is
+-- excluded together with its descendants), so item queries can hide a subtree by a single flag.
+setBucketExcluded:
+UPDATE bucket SET excluded = ?, updatedAt = ? WHERE id = ?;
+
+hardDeleteBucket:
+DELETE FROM bucket WHERE id = ?;
+
+findBucketById:
+SELECT * FROM bucket WHERE id = ? AND deleted = 0;
+
+findBucketByUri:
+SELECT * FROM bucket WHERE uri = ? AND deleted = 0;
+
+-- Includes tombstones — upsert needs to find a soft-deleted row to revive by uri.
+findBucketByUriIncludingDeleted:
+SELECT * FROM bucket WHERE uri = ?;
+
+childBuckets:
+SELECT * FROM bucket WHERE parentId = ? AND deleted = 0 ORDER BY name;
+
+rootBuckets:
+SELECT * FROM bucket WHERE parentId IS NULL AND deleted = 0 ORDER BY name;
+
+allBuckets:
+SELECT * FROM bucket WHERE deleted = 0 ORDER BY name;
+
+-- The excluded folders (subtree roots included) the scanner must skip so it doesn't reconcile,
+-- re-add, or prune their contents.
+excludedBucketUris:
+SELECT uri FROM bucket WHERE excluded = 1 AND deleted = 0;

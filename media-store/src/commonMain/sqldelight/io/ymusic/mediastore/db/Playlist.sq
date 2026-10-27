@@ -1,0 +1,29 @@
+-- User-created playlists only. Recent play / Top tracks are not rows here, so this table
+-- holds nothing until the user makes a playlist.
+CREATE TABLE playlist (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    name      TEXT    NOT NULL,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+insertPlaylist:
+INSERT INTO playlist(name, createdAt, updatedAt) VALUES (?, ?, ?);
+
+lastInsertRowId:
+SELECT last_insert_rowid();
+
+renamePlaylist:
+UPDATE playlist SET name = ?, updatedAt = ? WHERE id = ?;
+
+deletePlaylist:
+DELETE FROM playlist WHERE id = ?;
+
+deleteAllPlaylists:
+DELETE FROM playlist;
+
+findPlaylist:
+SELECT * FROM playlist WHERE id = ?;
+
+allPlaylists:
+SELECT * FROM playlist ORDER BY id;

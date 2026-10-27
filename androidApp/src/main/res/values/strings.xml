@@ -1,0 +1,35 @@
+<resources>
+    <string name="app_name">YMusic V4</string>
+    <string name="playback_notification_channel">Playback</string>
+    <string name="notification_previous">Previous</string>
+    <string name="notification_play">Play</string>
+    <string name="notification_pause">Pause</string>
+    <string name="notification_next">Next</string>
+    <string name="notifications_required">YMusic plays music from a background service that must show a playback notification. Allow notifications to continue.</string>
+    <string name="notifications_allow">Allow notifications</string>
+    <string name="download_notification_channel">Downloads</string>
+    <string name="notification_downloads_running">Downloading…</string>
+    <string name="notification_downloads_multi">Downloading %1$d items</string>
+    <string name="download_state_queued">Queued</string>
+    <string name="download_state_preparing">Preparing…</string>
+    <string name="download_state_downloading">Downloading…</string>
+    <string name="download_state_processing">Processing…</string>
+    <string name="download_state_paused">Paused</string>
+    <string name="notification_download_finished">Download finished</string>
+    <string name="downloads_summary_finished">%1$d finished</string>
+    <string name="downloads_summary_failed">%1$d failed</string>
+    <string name="downloads_summary_paused">%1$d paused</string>
+    <string name="downloads_pause_all">Pause all</string>
+    <string name="share_play">Play</string>
+    <string name="share_download_mp3">MP3 Download</string>
+    <string name="share_download_m4a">M4A Download</string>
+    <string name="share_download">Other Download</string>
+    <string name="share_no_link">No link to open in what was shared</string>
+    <string name="widget_small_name">Player · Small</string>
+    <string name="widget_compact_name">Player · Compact</string>
+    <string name="widget_large_name">Player · Large</string>
+    <string name="widget_square_name">Player · Square</string>
+    <string name="widget_description">Now playing with playback controls</string>
+    <string name="widget_nothing_playing">Nothing playing</string>
+    <string name="widget_open_to_start">Open YMusic to start listening</string>
+</resources>
