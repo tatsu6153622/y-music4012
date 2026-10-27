@@ -1,3 +1,4 @@
+#import <TargetConditionals.h>
 #ifdef __APPLE__
 #import "mse_vt_present.h"
 #import "mse_ffmpeg.h"
@@ -170,7 +171,7 @@ void *mse_vt_dec_open(const uint8_t *avcc, int avcc_n, int w, int h)
         return NULL;
     }
     /* AVSampleBufferDisplayLayer needs IOSurface-backed NV12. NULL dest
-       lets software VT emit planar 420 with no IOSurface → enqueue
+       lets software VT emit planar 420 with no IOSurface ↁEenqueue
        succeeds, picture stays black (61 fps, empty view). */
     if (vt_create_session(d) < 0) {
         CFRelease(d->fmt);

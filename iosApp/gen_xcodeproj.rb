@@ -1,5 +1,5 @@
 #!/usr/bin/env ruby
-# Generates iosApp.xcodeproj — the iOS product shell that runs the shared Compose UI (:commonUi's
+# Generates iosApp.xcodeproj  Ethe iOS product shell that runs the shared Compose UI (:commonUi's
 # YMusicApp framework) on a device. Gradle builds + embeds + signs the framework
 # (:commonUi:embedAndSignAppleFrameworkForXcode, -PkmpTargets=all so iosArm64 is configured on this
 # Intel host); Xcode compiles iosApp/iOSApp.swift, which hosts MainViewControllerKt.MainViewController.
@@ -78,7 +78,7 @@ target.build_configurations.each do |config|
   s["INFOPLIST_FILE"] = "iosApp/Info.plist"
   s["TARGETED_DEVICE_FAMILY"] = "1,2"
   s["CODE_SIGN_STYLE"] = "Automatic"
-  # DEVELOPMENT_TEAM intentionally unset — pick your Team in Xcode's Signing tab.
+  # DEVELOPMENT_TEAM intentionally unset  Epick your Team in Xcode's Signing tab.
   s["ENABLE_USER_SCRIPT_SANDBOXING"] = "NO"
   s["ONLY_ACTIVE_ARCH"] = "YES"
   s["ASSETCATALOG_COMPILER_APPICON_NAME"] = "AppIcon"

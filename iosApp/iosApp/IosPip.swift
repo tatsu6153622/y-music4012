@@ -22,8 +22,8 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
         NotificationCenter.default.addObserver(
             forName: UIApplication.willResignActiveNotification,
             object: nil,
-            queue: .main,
-        ) { [weak self] _ in
+            queue: .main
+    ) { [weak self] _ in
             self?.startIfEligible()
         }
     }
@@ -47,8 +47,8 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
         if controller == nil {
             let source = AVPictureInPictureController.ContentSource(
                 sampleBufferDisplayLayer: layer,
-                playbackDelegate: self,
-            )
+                playbackDelegate: self
+    )
             let pip = AVPictureInPictureController(contentSource: source)
             pip.delegate = self
             pip.requiresLinearPlayback = false
@@ -159,7 +159,7 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
 
     func pictureInPictureController(
         _ pictureInPictureController: AVPictureInPictureController,
-        restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void,
+        restoreUserInterfaceForPictureInPictureStopWithCompletionHandler completionHandler: @escaping (Bool) -> Void
     ) {
         restoringFromPip = true
         completionHandler(true)
@@ -176,7 +176,7 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
 
     func pictureInPictureController(
         _ pictureInPictureController: AVPictureInPictureController,
-        setPlaying playing: Bool,
+        setPlaying playing: Bool
     ) {
         if playing { IosPipHostKt.iosPipPlay() } else { IosPipHostKt.iosPipPause() }
         syncTimebase(at: IosPipHostKt.iosPipPositionSeconds())
@@ -184,7 +184,7 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
     }
 
     func pictureInPictureControllerTimeRangeForPlayback(
-        _ pictureInPictureController: AVPictureInPictureController,
+        _ pictureInPictureController: AVPictureInPictureController
     ) -> CMTimeRange {
         let dur = IosPipHostKt.iosPipDurationSeconds()
         if dur <= 0 {
@@ -194,14 +194,14 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
     }
 
     func pictureInPictureControllerIsPlaybackPaused(
-        _ pictureInPictureController: AVPictureInPictureController,
+        _ pictureInPictureController: AVPictureInPictureController
     ) -> Bool {
         !IosPipHostKt.iosPipIsPlaying()
     }
 
     func pictureInPictureController(
         _ pictureInPictureController: AVPictureInPictureController,
-        didTransitionToRenderSize newRenderSize: CMVideoDimensions,
+        didTransitionToRenderSize newRenderSize: CMVideoDimensions
     ) {
         IosPipHostKt.iosPipSetRenderSize(width: Int32(newRenderSize.width), height: Int32(newRenderSize.height))
     }
@@ -209,7 +209,7 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
     func pictureInPictureController(
         _ pictureInPictureController: AVPictureInPictureController,
         skipByInterval skipInterval: CMTime,
-        completion completionHandler: @escaping () -> Void,
+        completion completionHandler: @escaping () -> Void
     ) {
         let at = IosPipHostKt.iosPipSeekBySeconds(delta: CMTimeGetSeconds(skipInterval))
         syncTimebase(at: at)
@@ -226,8 +226,8 @@ final class IosPip: NSObject, AVPictureInPictureControllerDelegate, AVPictureInP
             CMTimebaseCreateWithSourceClock(
                 allocator: kCFAllocatorDefault,
                 sourceClock: CMClockGetHostTimeClock(),
-                timebaseOut: &tb,
-            )
+                timebaseOut: &tb
+    )
             if let tb {
                 CMTimebaseSetRate(tb, rate: 0)
                 layer.controlTimebase = tb
