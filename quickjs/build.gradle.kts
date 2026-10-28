@@ -201,11 +201,15 @@ val cmakeConfigure by tasks.registering(Exec::class) {
     inputs.property("macDeploymentTarget", macDeploymentTarget)
     outputs.file(File(out, "CMakeCache.txt"))
     environment("JAVA_HOME", javaHomeForJni)
+    val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
+    val extraArgs = if (isWin) listOf("-G", "Ninja", "-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++") else emptyList()
     commandLine(
-        "cmake", "-S", nativeSrc.absolutePath, "-B", out.absolutePath,
-        "-DCMAKE_BUILD_TYPE=Release",
-        "-DCMAKE_OSX_DEPLOYMENT_TARGET=$macDeploymentTarget",
-    ) + (if (org.gradle.internal.os.OperatingSystem.current().isWindows) listOf("-G", "Ninja", "-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++") else emptyList())
+        listOf(
+            "cmake", "-S", nativeSrc.absolutePath, "-B", out.absolutePath,
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DCMAKE_OSX_DEPLOYMENT_TARGET=$macDeploymentTarget",
+        ) + extraArgs
+    )
 }
 
 val cmakeBuild by tasks.registering(Exec::class) {
