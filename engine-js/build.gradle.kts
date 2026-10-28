@@ -9,7 +9,7 @@ import com.google.javascript.jscomp.SourceFile
 // All engine JS in one place, built into single artifacts shipped with the app and remotely
 // replaceable as a whole. Pipeline: tsc --noEmit (typecheck) -> esbuild (bundle only, no minify)
 // -> Closure Compiler ADVANCED (minify + full property mangling). Closure knows the stdlib via its
-// builtin externs, so EVERYTHING internal mangles  Eidentifiers and property names alike; the only
+// builtin externs, so EVERYTHING internal mangles  Eidentifiers and property names alike; the only
 // preserved names are externs.js (the C natives, the __js* transport globals, `versions`) and
 // quoted wire keys (Closure never renames quoted properties; the coding standard writes all wire
 // objects quoted/bracketed).
@@ -30,12 +30,12 @@ plugins {
 val npxCmd = if (org.gradle.internal.os.OperatingSystem.current().isWindows) "npx.cmd" else npxCmd
 
 
-// Each bundle's own revision  EVersions.engineJsVersion / playerJsVersion (buildSrc), bumped there
+// Each bundle's own revision  EVersions.engineJsVersion / playerJsVersion (buildSrc), bumped there
 // on every remote push of that bundle. Inlined by esbuild --define as BACKEND_VERSION (`declare
 // const` in types.d.ts): the "init" health check reports it; the host logs it on swaps and stamps
 // it into error reports. The test bundle carries the engine's.
 
-// Compile-time defines: bare `declare const` identifiers substituted inline at bundle time  E// no runtime global, no extern. PRODUCTION is the same -Pproduction bake as Kotlin
+// Compile-time defines: bare `declare const` identifiers substituted inline at bundle time  E// no runtime global, no extern. PRODUCTION is the same -Pproduction bake as Kotlin
 // BuildFlags.PRODUCTION: `debug(function () { return concat; })` does not call the thunk
 // when true (esbuild inlines; Closure DCE drops the dead branch).
 val production = isProductionBuild()
@@ -80,9 +80,9 @@ val typecheckJs by tasks.registering(Exec::class) {
 }
 
 // esbuild resolves TS + modules into one plain script. target=esnext ON PURPOSE: lowering would
-// rewrite class fields into __publicField(this, "_x", …)  Ea QUOTED define whose dotted accesses
+// rewrite class fields into __publicField(this, "_x", …)  Ea QUOTED define whose dotted accesses
 // Closure then renames apart (a split property = undefined at runtime). Closure parses the native
-// syntax fine. No minification here  EClosure owns that.
+// syntax fine. No minification here  EClosure owns that.
 val bundleRawJs by tasks.registering(Exec::class) {
     dependsOn(typecheckJs)
     inputs.dir(srcDir)
@@ -102,13 +102,13 @@ val bundleRawJs by tasks.registering(Exec::class) {
 }
 
 // One Closure invocation, shared by both artifacts. Level ADVANCED = full mangling (production);
-// SIMPLE = locals only, globals/properties preserved  Ethe interim level for the test bundle so
+// SIMPLE = locals only, globals/properties preserved  Ethe interim level for the test bundle so
 // the externally-evaled test snippets keep working while they migrate to fixtures, with Closure's
 // parser/emitter still validating the output every build. The fixture-migration end state flips
 // the test bundle to ADVANCED too.
 // What went INTO the raw bundle, per source directory (esbuild's metafile): the shape of the
 // growth. Closure's output has no module boundaries left, so the breakdown can only be measured
-// before it  Ethe ratio to the final size is what it is, but the ranking survives minification.
+// before it  Ethe ratio to the final size is what it is, but the ranking survives minification.
 fun sourceBreakdown(meta: java.io.File): List<Pair<String, Long>> {
     @Suppress("UNCHECKED_CAST")
     val json = groovy.json.JsonSlurper().parse(meta) as Map<String, Any>
@@ -140,7 +140,7 @@ fun closureCompile(raw: java.io.File, out: java.io.File, map: java.io.File, meta
     val options = CompilerOptions().apply {
         setLanguageIn(CompilerOptions.LanguageMode.ECMASCRIPT_NEXT)
         setLanguageOut(CompilerOptions.LanguageMode.NO_TRANSPILE)
-        // CUSTOM = pure-ECMAScript builtin externs (no DOM)  EQuickJS has no browser surface,
+        // CUSTOM = pure-ECMAScript builtin externs (no DOM)  EQuickJS has no browser surface,
         // and anything not in externs is fair game for renaming.
         setEnvironment(CompilerOptions.Environment.CUSTOM)
         sourceMapOutputPath = map.absolutePath
@@ -162,7 +162,7 @@ fun closureCompile(raw: java.io.File, out: java.io.File, map: java.io.File, meta
         SourceFile.fromFile(externsJs.asFile.absolutePath)
     val compiler = Compiler()
     val result = compiler.compile(externs, listOf(SourceFile.fromFile(raw.absolutePath)), options)
-    // Warnings surface loudly: an undeclared name here usually means a missing extern  Eunder
+    // Warnings surface loudly: an undeclared name here usually means a missing extern  Eunder
     // ADVANCED that is a future runtime breakage, never noise.
     result.warnings.forEach { logger.warn("closure: $it") }
     if (!result.success) {
@@ -226,7 +226,7 @@ val closurePlayerJs by tasks.registering {
     }
 }
 
-// The TEST bundle: production + fixtures, same pipeline and same ADVANCED level  Etests run on
+// The TEST bundle: production + fixtures, same pipeline and same ADVANCED level  Etests run on
 // output as mangled as production's. The few remaining load() snippets touch only externed
 // natives, which is exactly what survives.
 val rawTestBundleFile = layout.buildDirectory.file("raw/engine-test.raw.js")
