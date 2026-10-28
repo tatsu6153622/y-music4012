@@ -450,7 +450,7 @@ tasks.matching { it.name == "proguardReleaseJars" }.configureEach {
         val jniKeep = "jni/${hostOs}_" + (if (hostArm64) "aarch64" else "x64") + "/"
         fun isForeignNative(jar: String, entry: String): Boolean = when {
             // Its JNI and libav ship once, in app resources (stagePackedFfmpeg).
-            jar.startsWith("mse-jvm") -> entry.startsWith("jni/")
+            jar.startsWith("mse-jvm") -> false
             entry.startsWith("org/sqlite/native/") -> !entry.startsWith(sqliteKeep)
             jnaNativeDir.containsMatchIn(entry) -> !entry.startsWith(jnaKeep)
             entry.startsWith("libskiko-") -> !entry.startsWith(skikoKeep)

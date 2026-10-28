@@ -112,3 +112,7 @@ target_include_directories(mseffmpegjni PRIVATE
   $ENV{JAVA_HOME}/include/linux
   $ENV{JAVA_HOME}/include/win32
 )
+
+if(WIN32 OR MINGW)
+  set_target_properties(mseffmpegjni PROPERTIES PREFIX "")
+endif()
