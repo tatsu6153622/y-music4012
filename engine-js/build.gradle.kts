@@ -39,8 +39,9 @@ val npxCmd: String = if (org.gradle.internal.os.OperatingSystem.current().isWind
 // BuildFlags.PRODUCTION: `debug(function () { return concat; })` does not call the thunk
 // when true (esbuild inlines; Closure DCE drops the dead branch).
 val production = isProductionBuild()
+val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
 fun esbuildDefines(bundleName: String, backendVersion: Long) = arrayOf(
-    "--define:BUNDLE_NAME=\"$bundleName\"",
+    if (isWin) "--define:BUNDLE_NAME=\\\"$bundleName\\\"" else "--define:BUNDLE_NAME=\"$bundleName\"",
     "--define:BACKEND_VERSION=$backendVersion",
     "--define:PRODUCTION=$production",
 )
