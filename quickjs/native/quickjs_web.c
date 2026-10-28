@@ -821,7 +821,7 @@ static int64_t date_now_ms(void)
     return (int64_t)tv.tv_sec * 1000 + (tv.tv_usec / 1000);
 }
 
-/* Monotonic ns as ms. Do not quantize — BotGuard times 1000 Math.random against this. */
+/* Monotonic ns as ms. Do not quantize  EBotGuard times 1000 Math.random against this. */
 static JSValue js_perf_now(JSContext *ctx, JSValueConst this_val, int argc, JSValueConst *argv)
 {
     double n;
@@ -1190,6 +1190,7 @@ static JSValue js_time_zone(JSContext *ctx, JSValueConst this_val, int argc, JSV
             return JS_NewString(ctx, prop);
     }
 #endif
+#ifndef _WIN32
     n = readlink("/etc/localtime", path, sizeof(path) - 1);
     if (n > 0) {
         path[n] = 0;
@@ -1197,6 +1198,7 @@ static JSValue js_time_zone(JSContext *ctx, JSValueConst this_val, int argc, JSV
         if (tz_looks_iana(tail))
             return JS_NewString(ctx, tail);
     }
+#endif
     return JS_NewString(ctx, "UTC");
 }
 
