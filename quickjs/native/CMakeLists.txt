@@ -24,13 +24,16 @@ add_library(quickjsjni SHARED
 )
 
 target_include_directories(quickjsjni PRIVATE ${QJS_DIR})
+if(WIN32 OR MINGW)
+  target_link_libraries(quickjsjni m pthread ws2_32)
+endif()
 
 if(ANDROID)
   # The NDK sysroot provides jni.h automatically.
   target_link_libraries(quickjsjni mediandk log)
 else()
   # Host JVM: JNI headers straight from JAVA_HOME. We avoid find_package(JNI) (it insists on the
-  # AWT/jawt component we don't need) — a JNI shared library resolves JVM symbols at load time.
+  # AWT/jawt component we don't need)  Ea JNI shared library resolves JVM symbols at load time.
   if(NOT DEFINED ENV{JAVA_HOME})
     message(FATAL_ERROR "JAVA_HOME must be set to a JDK (with headers) to build the host JNI library")
   endif()
@@ -52,7 +55,7 @@ else()
   target_link_options(quickjsjni PRIVATE "-Wl,--gc-sections")
 endif()
 
-# ASan/UBSan harness for the C pipe layer — dev-only, never part of the normal build
+# ASan/UBSan harness for the C pipe layer  Edev-only, never part of the normal build
 # (see pipe_stress.c for build/run instructions). It #includes quickjs_native.c itself.
 add_executable(pipe_stress EXCLUDE_FROM_ALL
   pipe_stress.c
