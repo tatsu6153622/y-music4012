@@ -1,4 +1,4 @@
-ï»¿name: Build Windows MSI
+name: Build Windows MSI
 
 on:
   workflow_dispatch:
@@ -42,7 +42,7 @@ jobs:
           echo "org.gradle.jvmargs=-Xmx4g -XX:+UseG1GC" >> ~/.gradle/gradle.properties
           echo "kotlin.daemon.jvmargs=-Xmx3g" >> ~/.gradle/gradle.properties
 
-      # â”€â”€â”€ FFmpegã‚­ãƒ£ãƒƒã‚·ãƒ¥ã®å¾©å…ƒï¼ˆçµ¶å¯¾ãƒ‘ã‚¹ã§æŒ‡å®šï¼‰ â”€â”€â”€
+      # „Ÿ„Ÿ„Ÿ FFmpegƒLƒƒƒbƒVƒ…‚Ì•œŒ³iâ‘ÎƒpƒX‚Åw’èj „Ÿ„Ÿ„Ÿ
       - name: Restore FFmpeg cache
         id: restore-ffmpeg
         uses: actions/cache/restore@v4
@@ -75,7 +75,7 @@ jobs:
             patch
             file
 
-      # ã‚­ãƒ£ãƒƒã‚·ãƒ¥ãŒç„¡ã„å ´åˆã®ã¿FFmpegã‚’ãƒ“ãƒ«ãƒ‰
+      # ƒLƒƒƒbƒVƒ…‚ª–³‚¢ê‡‚Ì‚İFFmpeg‚ğƒrƒ‹ƒh
       - name: Build Windows FFmpeg
         if: steps.restore-ffmpeg.outputs.cache-hit != 'true'
         shell: msys2 {0}
@@ -84,9 +84,15 @@ jobs:
           export PATH="/mingw64/bin:$PATH"
           export LIBVPX_TARGET=x86_64-win64-gcc
           bash scripts/build-desktop.sh || true
-          ls -la out/windows-x86_64/pack/ || true
+          # pack ƒtƒHƒ‹ƒ_‚ğŠmÀ‚É—pˆÓ
+          mkdir -p out/windows-x86_64/pack
+          cp -a out/windows-x86_64/bin/*.exe out/windows-x86_64/pack/ 2>/dev/null || true
+          cp -a out/windows-x86_64/bin/*.dll out/windows-x86_64/pack/ 2>/dev/null || true
+          cp -a out/windows-x86_64/lib/*.dll out/windows-x86_64/pack/ 2>/dev/null || true
+          echo "=== Verified pack contents ==="
+          ls -la out/windows-x86_64/pack/
 
-      # ãƒ“ãƒ«ãƒ‰æˆåŠŸç›´å¾Œã«å³åº§ã«ã‚­ãƒ£ãƒƒã‚·ãƒ¥ã‚’ç¢ºå®šä¿å­˜ï¼ˆçµ¶å¯¾ãƒ‘ã‚¹ã§ç¢ºå®Ÿã«ä¿å­˜ï¼‰
+      # ƒrƒ‹ƒh¬Œ÷’¼Œã‚É‘¦À‚ÉƒLƒƒƒbƒVƒ…‚ğŠm’è•Û‘¶iâ‘ÎƒpƒX‚ÅŠmÀ‚É•Û‘¶j
       - name: Save FFmpeg cache immediately
         if: steps.restore-ffmpeg.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
@@ -94,7 +100,7 @@ jobs:
           path: ${{ github.workspace }}/ffmpeg-build/out
           key: ffmpeg-windows-x86_64-v3
 
-      # MinGW64ç’°å¢ƒã§ Gradle ã‚’å®Ÿè¡Œã—ã¦MSIã‚’ä½œæˆ
+      # MinGW64ŠÂ‹«‚Å Gradle ‚ğÀs‚µ‚ÄMSI‚ğì¬
       - name: Build Windows MSI
         shell: msys2 {0}
         working-directory: YMusicV4
