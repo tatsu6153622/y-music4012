@@ -102,22 +102,27 @@ jobs:
 
       # pack ディレクトリと ffmpeg.exe の存在を確実に保証
       - name: Ensure FFmpeg pack is present
-        shell: bash
+        shell: msys2 {0}
         run: |
-          mkdir -p ffmpeg-build/out/windows-x86_64/pack
-          # bin または lib にあるバイナリを pack に集約
-          cp -a ffmpeg-build/out/windows-x86_64/bin/*.exe ffmpeg-build/out/windows-x86_64/pack/ 2>/dev/null || true
-          cp -a ffmpeg-build/out/windows-x86_64/bin/*.dll ffmpeg-build/out/windows-x86_64/pack/ 2>/dev/null || true
-          cp -a ffmpeg-build/out/windows-x86_64/lib/*.dll ffmpeg-build/out/windows-x86_64/pack/ 2>/dev/null || true
+          PACK_DIR="${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64/pack"
+          mkdir -p "$PACK_DIR"
           
-          # もし bin に ffmpeg.exe が無ければ、MSYS2 の ffmpeg またはビルドツリーからコピー
-          if [ ! -f "ffmpeg-build/out/windows-x86_64/pack/ffmpeg.exe" ]; then
-            echo "Searching for ffmpeg.exe..."
-            find ffmpeg-build -name "ffmpeg.exe" -exec cp -a {} ffmpeg-build/out/windows-x86_64/pack/ \; 2>/dev/null || true
+          # 1. ビルド成果物からコピーを試みる
+          cp -a ${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64/bin/*.exe "$PACK_DIR/" 2>/dev/null || true
+          cp -a ${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64/bin/*.dll "$PACK_DIR/" 2>/dev/null || true
+          cp -a ${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64/lib/*.dll "$PACK_DIR/" 2>/dev/null || true
+          
+          # 2. ffmpeg.exe が見当たらなければ MinGW の ffmpeg を pacman で用意してコピー
+          if [ ! -f "$PACK_DIR/ffmpeg.exe" ]; then
+            echo "ffmpeg.exe missing from custom build, pulling from mingw-w64..."
+            pacman -S --noconfirm mingw-w64-x86_64-ffmpeg
+            cp -a /mingw64/bin/ffmpeg.exe "$PACK_DIR/"
+            cp -a /mingw64/bin/av*.dll "$PACK_DIR/" 2>/dev/null || true
+            cp -a /mingw64/bin/sw*.dll "$PACK_DIR/" 2>/dev/null || true
           fi
           
-          echo "=== Contents of pack directory ==="
-          ls -la ffmpeg-build/out/windows-x86_64/pack/
+          echo "=== Final contents of pack directory ==="
+          ls -la "$PACK_DIR"
 
       # MinGW64環境で Gradle を実行してMSIを作成
       - name: Build Windows MSI
