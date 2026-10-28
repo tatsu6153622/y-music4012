@@ -42,13 +42,13 @@ jobs:
           echo "org.gradle.jvmargs=-Xmx4g -XX:+UseG1GC" >> ~/.gradle/gradle.properties
           echo "kotlin.daemon.jvmargs=-Xmx3g" >> ~/.gradle/gradle.properties
 
-      # ─── FFmpegキャッシュの復元 ───
+      # ─── FFmpegキャッシュの復元（絶対パスで指定） ───
       - name: Restore FFmpeg cache
         id: restore-ffmpeg
         uses: actions/cache/restore@v4
         with:
-          path: ffmpeg-build/out
-          key: ffmpeg-windows-x86_64-v2
+          path: ${{ github.workspace }}/ffmpeg-build/out
+          key: ffmpeg-windows-x86_64-v3
 
       - name: Install MSYS2 and build tools
         uses: msys2/setup-msys2@v2
@@ -86,15 +86,15 @@ jobs:
           bash scripts/build-desktop.sh || true
           ls -la out/windows-x86_64/pack/ || true
 
-      # ビルド成功直後に即座にキャッシュを確定保存（途中で失敗しても次回以降再利用される）
+      # ビルド成功直後に即座にキャッシュを確定保存（絶対パスで確実に保存）
       - name: Save FFmpeg cache immediately
         if: steps.restore-ffmpeg.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: ffmpeg-build/out
-          key: ffmpeg-windows-x86_64-v2
+          path: ${{ github.workspace }}/ffmpeg-build/out
+          key: ffmpeg-windows-x86_64-v3
 
-      # MinGW64のツール（gcc, ninja, cmake）をPATHに通してGradleを実行
+      # MinGW64環境で Gradle を実行してMSIを作成
       - name: Build Windows MSI
         shell: msys2 {0}
         working-directory: YMusicV4
