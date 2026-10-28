@@ -100,6 +100,25 @@ jobs:
           path: ${{ github.workspace }}/ffmpeg-build/out
           key: ffmpeg-windows-x86_64-v3
 
+      # pack ディレクトリと ffmpeg.exe の存在を確実に保証
+      - name: Ensure FFmpeg pack is present
+        shell: bash
+        run: |
+          mkdir -p ffmpeg-build/out/windows-x86_64/pack
+          # bin または lib にあるバイナリを pack に集約
+          cp -a ffmpeg-build/out/windows-x86_64/bin/*.exe ffmpeg-build/out/windows-x86_64/pack/ 2>/dev/null || true
+          cp -a ffmpeg-build/out/windows-x86_64/bin/*.dll ffmpeg-build/out/windows-x86_64/pack/ 2>/dev/null || true
+          cp -a ffmpeg-build/out/windows-x86_64/lib/*.dll ffmpeg-build/out/windows-x86_64/pack/ 2>/dev/null || true
+          
+          # もし bin に ffmpeg.exe が無ければ、MSYS2 の ffmpeg またはビルドツリーからコピー
+          if [ ! -f "ffmpeg-build/out/windows-x86_64/pack/ffmpeg.exe" ]; then
+            echo "Searching for ffmpeg.exe..."
+            find ffmpeg-build -name "ffmpeg.exe" -exec cp -a {} ffmpeg-build/out/windows-x86_64/pack/ \; 2>/dev/null || true
+          fi
+          
+          echo "=== Contents of pack directory ==="
+          ls -la ffmpeg-build/out/windows-x86_64/pack/
+
       # MinGW64環境で Gradle を実行してMSIを作成
       - name: Build Windows MSI
         shell: msys2 {0}
