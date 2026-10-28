@@ -28,12 +28,12 @@ compose.resources {
 }
 
 val desktopVersion = appVersionName()
-// BUMP ON EVERY RELEASE. The update check compares this and nothing else — desktopVersion is a
+// BUMP ON EVERY RELEASE. The update check compares this and nothing else  EdesktopVersion is a
 // display string. Desktop counts separately from androidApp's versionCode (separate cadence).
 val desktopVersionCode = 16
 version = desktopVersion
 
-/** The first candidate JDK that carries jpackage — the marker for "full JDK, not a JBR/JRE". */
+/** The first candidate JDK that carries jpackage  Ethe marker for "full JDK, not a JBR/JRE". */
 val fullJdkHome: String? = run {
     val candidates = listOfNotNull(
         providers.gradleProperty("ymusic.jdkHome").orNull,
@@ -49,7 +49,7 @@ val fullJdkHome: String? = run {
 }
 
 // The DSN is machine-local (see SentryProps in buildSrc), so it reaches the app as generated
-// source rather than a checked-in constant. The release carries the git commit — that's how an
+// source rather than a checked-in constant. The release carries the git commit  Ethat's how an
 // event traces back to git history without a source-context upload.
 // The key app updates must be signed with, from the environment/local.properties so a fork builds
 // without ours. No key means no update is ever offered.
@@ -72,7 +72,7 @@ val localIp: String = localServerIp()
 // Dev and test runs exec the ffmpeg staged from the sibling ffmpeg-build through
 // -Dio.ymusic.ffmpeg. A packaged build never sees this property: it uses the copy packed next to
 // the compose resources (see stagePackedFfmpeg). Set on the run and test TASKS, never on
-// compose.desktop.application.jvmArgs — those are baked into the packaged launcher.
+// compose.desktop.application.jvmArgs  Ethose are baked into the packaged launcher.
 val ffmpegForDev: File? = FfmpegBuild.hostBinary(project)
 if (ffmpegForDev != null) {
     val syncFfmpegHost = rootProject.tasks.named("syncFfmpegHost")
@@ -89,7 +89,7 @@ if (ffmpegForDev != null) {
 }
 
 // Host ffmpeg pack (CLI + libav DSOs) plus the MSE JNI that links the same libav, into compose
-// app-resources — the one copy of each library a package carries (:mse's jar copy is stripped
+// app-resources  Ethe one copy of each library a package carries (:mse's jar copy is stripped
 // below). Each library ships once, under the soname the CLI and libav itself link against: the
 // pack's other names are symlinks, which a copy would turn into full duplicates.
 val ffmpegPackedName = FfmpegBuild.hostCliName()
@@ -108,14 +108,15 @@ val stagePackedFfmpeg by tasks.registering(Copy::class) {
                 if (Files.isSymbolicLink(file.toPath())) {
                     exclude()
                 } else {
-                    // libavcodec.63.2.100.dylib → libavcodec.63.dylib; libavcodec.so.63.2.100 → libavcodec.so.63
+                    // libavcodec.63.2.100.dylib ↁElibavcodec.63.dylib; libavcodec.so.63.2.100 ↁElibavcodec.so.63
                     name = name.replace(Regex("""^(lib\w+)\.(\d+)\.\d+\.\d+\.dylib$"""), "$1.$2.dylib")
                         .replace(Regex("""^(lib\w+\.so\.\d+)\.\d+\.\d+$"""), "$1")
                 }
             }
         }
         from(project(":mse").layout.buildDirectory.dir("generated/mseJniResources/jni")) {
-            include("*/$mseJniName")
+            include("*/$mseJniName", "*/*mseffmpegjni*.dll")
+            rename { "mseffmpegjni.dll" }
             eachFile { path = name }
         }
         includeEmptyDirs = false
@@ -153,7 +154,7 @@ tasks.matching { it.name == "createDistributable" || it.name == "createReleaseDi
 
 /**
  * Point the MSE JNI at the libav sonames staged beside it (it was linked against the full-version
- * names), and drop absolute rpaths the build machine leaked into it — only @loader_path is valid
+ * names), and drop absolute rpaths the build machine leaked into it  Eonly @loader_path is valid
  * in a package. Re-signed ad hoc after: arm64 refuses to load a dylib whose signature is broken.
  */
 fun relinkMacJni(jni: File) {
@@ -203,8 +204,7 @@ val generateBuildConfig by tasks.registering {
             internal const val APP_VERSION_CODE: Int = $desktopVersionCode
             internal const val APP_VERSION_NAME = "$desktopVersion"
 
-            // The P-256 key app updates must be signed with. Empty disables updates entirely —
-            // with nothing to verify against, trusting the network is worse than not updating.
+            // The P-256 key app updates must be signed with. Empty disables updates entirely  E            // with nothing to verify against, trusting the network is worse than not updating.
             internal const val UPDATE_PUBLIC_KEY = "$updatePublicKeyValue"
 
             // Base url of the remote config service. Empty = no request, compiled-in defaults.
@@ -220,7 +220,7 @@ val generateBuildConfig by tasks.registering {
     }
 }
 
-// The engine bundle ships inside the jar — JsSourceProvider's embed copy (version = the
+// The engine bundle ships inside the jar  EJsSourceProvider's embed copy (version = the
 // generated ENGINE_JS_EMBED_VERSION const),
 // no compiled-in constant.
 val engineJsBundle = configurations.create("engineJsBundle") {
@@ -241,8 +241,7 @@ kotlin {
     }
 
     sourceSets {
-        // The resources accessor (Res) only generates when this dependency sits in commonMain —
-        // that is where the module's own composeResources (the dock tile) get their accessors.
+        // The resources accessor (Res) only generates when this dependency sits in commonMain  E        // that is where the module's own composeResources (the dock tile) get their accessors.
         commonMain.dependencies {
             implementation(compose.components.resources)
         }
@@ -282,7 +281,7 @@ kotlin {
 // Standalone UI-component catalogue (see CatalogueMain.kt): ./gradlew :desktopApp:catalogue
 tasks.register<JavaExec>("catalogue") {
     group = "application"
-    description = "Open the UI-component catalogue window (no engines — fast design loop)."
+    description = "Open the UI-component catalogue window (no engines  Efast design loop)."
     val jvmMainCompilation = kotlin.jvm().compilations.getByName("main")
     dependsOn(jvmMainCompilation.compileTaskProvider)
     classpath(jvmMainCompilation.output.allOutputs, jvmMainCompilation.runtimeDependencyFiles)
@@ -293,12 +292,12 @@ compose.desktop {
     application {
         mainClass = "io.ymusic.desktop.MainKt"
         // A FULL JDK is needed both by jpackage/jlink and by ProGuard (it links against the
-        // platform classes — without them it can't even resolve java.lang.Object). The Gradle
+        // platform classes  Ewithout them it can't even resolve java.lang.Object). The Gradle
         // daemon often runs on a JBR that has neither, so find one; -Pymusic.jdkHome overrides.
         fullJdkHome?.let { javaHome = it }
         // Compose SwingPanel (MSE blit) needs AWT internals opened on the JBR/JDK.
         // Heap: without these, packaged HotSpot picks ~1/4 RAM (16g here) and
-        // InitialHeapSize=Xmx. Live use was ~50–97m objects / ~38m JIT code.
+        // InitialHeapSize=Xmx. Live use was ~50 E7m objects / ~38m JIT code.
         // Skia GPU cache default is 256m.
         jvmArgs(
             "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
@@ -311,7 +310,7 @@ compose.desktop {
             "-Dskiko.gpu.resourceCacheLimit=64M",
         )
         // Release packaging (packageReleaseDmg etc.) runs ProGuard SHRINK-ONLY: no obfuscation, no
-        // optimization — dead-code removal is the point (material-icons-extended alone is 37MB of
+        // optimization  Edead-code removal is the point (material-icons-extended alone is 37MB of
         // mostly-unused icon classes). Reflection/JNI/ServiceLoader keeps: proguard-rules.pro.
         buildTypes.release.proguard {
             version.set("7.7.0")
@@ -375,7 +374,7 @@ compose.desktop {
                 shortcut = true
             }
             // jlink modules the default set misses but the runtime graph uses: java.sql
-            // (sqlite-jdbc), jdk.unsupported (Unsafe — JNA/coroutines/okio),
+            // (sqlite-jdbc), jdk.unsupported (Unsafe  EJNA/coroutines/okio),
             // java.management + java.logging (Sentry integrations, JNA), jdk.crypto.ec
             // (TLS for update checks).
             modules("java.sql", "java.management", "java.logging", "jdk.unsupported", "jdk.crypto.ec")
@@ -391,14 +390,14 @@ tasks.matching {
     dependsOn(stagePackedFfmpeg)
 }
 
-// NOTE (byte-measured, 2026-08-14): jlink's --compress=2 (settable only reflectively — the
-// compose plugin's compressionLevel has no public DSL) shrinks the runtime dir 67→45MB on disk
-// but GROWS the DMG 72.2→76.1MiB: the DMG's zlib squeezes the raw jimage better than jlink's
-// per-resource zip, which is opaque to it. Download size is the goal → runtime stays uncompressed.
+// NOTE (byte-measured, 2026-08-14): jlink's --compress=2 (settable only reflectively  Ethe
+// compose plugin's compressionLevel has no public DSL) shrinks the runtime dir 67ↁE5MB on disk
+// but GROWS the DMG 72.2ↁE6.1MiB: the DMG's zlib squeezes the raw jimage better than jlink's
+// per-resource zip, which is opaque to it. Download size is the goal ↁEruntime stays uncompressed.
 
 // A package is built on, and for, one OS and CPU: the host's. sqlite-jdbc, JNA, skiko and our own
 // jni/ jars carry natives for others, which are dead weight there. They are dropped from the
-// ProGuard output — what jpackage consumes — in the same pass that normalizes entry timestamps.
+// ProGuard output  Ewhat jpackage consumes  Ein the same pass that normalizes entry timestamps.
 val hostOs = org.gradle.internal.os.OperatingSystem.current().let {
     if (it.isMacOsX) "macos" else if (it.isWindows) "windows" else "linux"
 }
@@ -485,7 +484,7 @@ tasks.matching { it.name == "proguardReleaseJars" }.configureEach {
 }
 
 // The host's installer under a name that says what it is for, ready for sign-app-update.mjs:
-//   ./gradlew :desktopApp:releaseInstaller   →   build/release/YMusic-<version>-<platform>.<dmg|msi|deb>
+//   ./gradlew :desktopApp:releaseInstaller   ↁE  build/release/YMusic-<version>-<platform>.<dmg|msi|deb>
 tasks.register<Copy>("releaseInstaller") {
     group = "distribution"
     description = "Package the release installer for this OS/arch and name it YMusic-<version>-<platform>."
