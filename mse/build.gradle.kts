@@ -256,9 +256,12 @@ val mseJniResourcesDir = layout.buildDirectory.dir("generated/mseJniResources")
 val bundleMseJniLib by tasks.registering(Copy::class) {
     dependsOn(mseCmakeBuild)
     from(mseJniDir) {
-        include(System.mapLibraryName("mseffmpegjni"))
+        include("*" + System.mapLibraryName("mseffmpegjni"), "*mseffmpegjni*.dll")
         include("libav*", "libsw*", "av*.dll", "sw*.dll")
         exclude("*.a", "*.pc", "*.la")
+        rename { name ->
+            if (name.contains("mseffmpegjni")) System.mapLibraryName("mseffmpegjni") else name
+        }
     }
     into(mseJniResourcesDir.map { it.dir("jni/$mseHostJniFolder") })
     doLast {
