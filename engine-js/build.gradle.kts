@@ -27,7 +27,7 @@ plugins {
     base
 }
 
-val npxCmd = if (org.gradle.internal.os.OperatingSystem.current().isWindows) "npx.cmd" else npxCmd
+val npxCmd: String = if (org.gradle.internal.os.OperatingSystem.current().isWindows) "npx.cmd" else "npx"
 
 
 // Each bundle's own revision  EVersions.engineJsVersion / playerJsVersion (buildSrc), bumped there
