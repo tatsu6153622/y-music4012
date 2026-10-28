@@ -61,7 +61,7 @@ actual object MseHostNative {
     @JvmStatic
     external fun videoSize(handle: Long, outWh: IntArray): Boolean
 
-    /** 0Ã—0 = decode size. Downscale-only letterbox fit when both > 0. */
+    /** 0ÃE = decode size. Downscale-only letterbox fit when both > 0. */
     @JvmStatic
     external fun setBlitSize(handle: Long, width: Int, height: Int)
 
@@ -97,9 +97,35 @@ actual object MseHostNative {
         runCatching { System.loadLibrary("jawt") }
         val name = "mseffmpegjni"
         val libFileName = System.mapLibraryName(name)
+        
+        // 1. mse.native.dir ƒvƒƒpƒeƒB‚ª‚ ‚ê‚Î—Dæƒ[ƒh
         System.getProperty("mse.native.dir")?.let { dir ->
-            System.load(File(dir, libFileName).absolutePath)
-            return
+            listOf(libFileName, "lib$libFileName").map { File(dir, it) }.firstOrNull { it.isFile }?.let {
+                System.load(it.absolutePath)
+                return
+            }
+        }
+        
+        // 2. WindowsƒCƒ“ƒXƒg[ƒ‹æŽü•Ó (app/resources/common “™) ‚ð’¼ÚŽ©“®’Tõ‚µ‚Äƒ[ƒh
+        val appDir = File(System.getProperty("user.dir", "."))
+        val candidateDirs = listOf(
+            appDir,
+            File(appDir, "resources/common"),
+            File(appDir, "app/resources/common"),
+            File(appDir, "resources"),
+            File(appDir, "app"),
+            File(System.getProperty("compose.application.resources.dir", "."))
+        )
+        for (cand in candidateDirs) {
+            listOf(libFileName, "lib$libFileName", "libmseffmpegjni.dll", "mseffmpegjni.dll").forEach { dllName ->
+                val f = File(cand, dllName)
+                if (f.isFile) {
+                    try {
+                        System.load(f.absolutePath)
+                        return
+                    } catch (_: Throwable) {}
+                }
+            }
         }
         val libraryPathError = try {
             System.loadLibrary(name)
