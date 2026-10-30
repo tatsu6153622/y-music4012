@@ -96,6 +96,7 @@ val ffmpegPackedName = FfmpegBuild.hostCliName()
 val ffmpegAppResources = layout.buildDirectory.dir("ffmpegAppResources")
 val mseJniName: String = System.mapLibraryName("mseffmpegjni")
 val stagePackedFfmpeg by tasks.registering(Copy::class) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     dependsOn(rootProject.tasks.named("syncFfmpegHost"), ":mse:bundleMseJniLib")
     val stagedDir = ffmpegAppResources.map { it.dir("common") }
     val ffmpegSigningIdentity = macSigningIdentity()
