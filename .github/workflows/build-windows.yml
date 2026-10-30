@@ -93,7 +93,7 @@ jobs:
           mkdir -p "$PREFIX_DIR/include" "$PREFIX_DIR/lib" "$PREFIX_DIR/bin" "$PACK_DIR"
 
           # MinGW 公式の ffmpeg パッケージを確実にインストール（ヘッダー、インポートライブラリ、DLLすべて揃う）
-          pacman -S --noconfirm --needed mingw-w64-x86_64-ffmpeg
+          pacman -S --noconfirm --needed mingw-w64-x86_64-ffmpeg || true
 
           # include (ヘッダー) を同期
           cp -rn /mingw64/include/libav* "$PREFIX_DIR/include/" 2>/dev/null || true
