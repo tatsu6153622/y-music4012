@@ -204,11 +204,15 @@ val mseCmakeConfigure by tasks.registering(Exec::class) {
     inputs.property("production", productionC)
     outputs.file(File(out, "CMakeCache.txt"))
     environment("JAVA_HOME", javaHomeForJni)
+    val isWin = org.gradle.internal.os.OperatingSystem.current().isWindows
+    val extraArgs = if (isWin) listOf("-G", "Ninja", "-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++") else emptyList()
     commandLine(
-        "cmake", "-S", mseNativeSrc.absolutePath, "-B", out.absolutePath,
-        "-DCMAKE_BUILD_TYPE=Release",
-        "-DFFMPEG_ROOT=${ffmpegDesktopPrefix?.absolutePath ?: ""}",
-        "-DPRODUCTION=$productionC",
+        listOf(
+            "cmake", "-S", mseNativeSrc.absolutePath, "-B", out.absolutePath,
+            "-DCMAKE_BUILD_TYPE=Release",
+            "-DFFMPEG_ROOT=${ffmpegDesktopPrefix?.absolutePath ?: ""}",
+            "-DPRODUCTION=$productionC",
+        ) + extraArgs
     )
 }
 val mseCmakeBuild by tasks.registering(Exec::class) {

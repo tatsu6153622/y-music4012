@@ -84,44 +84,39 @@ jobs:
           export PATH="/mingw64/bin:$PATH"
           export LIBVPX_TARGET=x86_64-win64-gcc
           bash scripts/build-desktop.sh || true
-          # pack フォルダを確実に用意
-          mkdir -p out/windows-x86_64/pack
-          cp -a out/windows-x86_64/bin/*.exe out/windows-x86_64/pack/ 2>/dev/null || true
-          cp -a out/windows-x86_64/bin/*.dll out/windows-x86_64/pack/ 2>/dev/null || true
-          cp -a out/windows-x86_64/lib/*.dll out/windows-x86_64/pack/ 2>/dev/null || true
-          echo "=== Verified pack contents ==="
-          ls -la out/windows-x86_64/pack/
-
-      # ビルド成功直後に即座にキャッシュを確定保存（絶対パスで確実に保存）
-      - name: Save FFmpeg cache immediately
-        if: steps.restore-ffmpeg.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
-        with:
-          path: ${{ github.workspace }}/ffmpeg-build/out
-          key: ffmpeg-windows-x86_64-v3
-
-      # pack ディレクトリと ffmpeg.exe の存在を確実に保証
-      - name: Ensure FFmpeg pack is present
+                # FFmpeg prefix (include, lib, bin, pack) を完璧に整備し、MSE JNI ビルドを確実に発動させる
+      - name: Ensure FFmpeg prefix and pack are fully populated
         shell: msys2 {0}
         run: |
-          PACK_DIR="${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64/pack"
-          mkdir -p "$PACK_DIR"
-          
-          # 1. ビルド成果物からコピーを試みる
-          cp -a ${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64/bin/*.exe "$PACK_DIR/" 2>/dev/null || true
-          cp -a ${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64/bin/*.dll "$PACK_DIR/" 2>/dev/null || true
-          cp -a ${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64/lib/*.dll "$PACK_DIR/" 2>/dev/null || true
-          
-          # 2. ffmpeg.exe が見当たらなければ MinGW の ffmpeg を pacman で用意してコピー
-          if [ ! -f "$PACK_DIR/ffmpeg.exe" ]; then
-            echo "ffmpeg.exe missing from custom build, pulling from mingw-w64..."
-            pacman -S --noconfirm mingw-w64-x86_64-ffmpeg
-            cp -a /mingw64/bin/ffmpeg.exe "$PACK_DIR/"
-            cp -a /mingw64/bin/av*.dll "$PACK_DIR/" 2>/dev/null || true
-            cp -a /mingw64/bin/sw*.dll "$PACK_DIR/" 2>/dev/null || true
-          fi
-          
-          echo "=== Final contents of pack directory ==="
+          PREFIX_DIR="${GITHUB_WORKSPACE}/ffmpeg-build/out/windows-x86_64"
+          PACK_DIR="$PREFIX_DIR/pack"
+          mkdir -p "$PREFIX_DIR/include" "$PREFIX_DIR/lib" "$PREFIX_DIR/bin" "$PACK_DIR"
+
+          # MinGW 公式の ffmpeg パッケージを確実にインストール（ヘッダー、インポートライブラリ、DLLすべて揃う）
+          pacman -S --noconfirm --needed mingw-w64-x86_64-ffmpeg
+
+          # include (ヘッダー) を同期
+          cp -rn /mingw64/include/libav* "$PREFIX_DIR/include/" 2>/dev/null || true
+          cp -rn /mingw64/include/libsw* "$PREFIX_DIR/include/" 2>/dev/null || true
+
+          # lib (インポートライブラリ) を同期
+          cp -rn /mingw64/lib/libav*.a "$PREFIX_DIR/lib/" 2>/dev/null || true
+          cp -rn /mingw64/lib/libsw*.a "$PREFIX_DIR/lib/" 2>/dev/null || true
+
+          # bin (DLL と ffmpeg.exe) を同期
+          cp -rn /mingw64/bin/av*.dll "$PREFIX_DIR/bin/" 2>/dev/null || true
+          cp -rn /mingw64/bin/sw*.dll "$PREFIX_DIR/bin/" 2>/dev/null || true
+          cp -rn /mingw64/bin/ffmpeg.exe "$PREFIX_DIR/bin/" 2>/dev/null || true
+
+          # pack にも全バイナリを同期
+          cp -a "$PREFIX_DIR/bin/ffmpeg.exe" "$PACK_DIR/"
+          cp -a "$PREFIX_DIR/bin/"*.dll "$PACK_DIR/" 2>/dev/null || true
+
+          echo "=== Prefix include ==="
+          ls -la "$PREFIX_DIR/include"
+          echo "=== Prefix lib ==="
+          ls -la "$PREFIX_DIR/lib"
+          echo "=== Pack contents ==="
           ls -la "$PACK_DIR"
 
       # MinGW64環境で Gradle を実行してMSIを作成
@@ -131,6 +126,8 @@ jobs:
         run: |
           export PATH="/mingw64/bin:$JAVA_HOME/bin:$PATH"
           ./gradlew.bat :desktopApp:packageMsi -x :engine-js:typecheckJs --no-daemon --stacktrace
+          echo "=== Check built mseffmpegjni.dll ==="
+          find . -name "*mseffmpegjni*.dll" -ls || true
 
       - name: Upload MSI Artifact
         uses: actions/upload-artifact@v4

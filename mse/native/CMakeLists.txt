@@ -21,6 +21,15 @@ foreach(_n libavformat.so libavformat.dylib avformat.dll libavformat.dll)
   endforeach()
 endforeach()
 if(NOT _avformat_shared)
+  foreach(_d ${FFMPEG_ROOT}/lib ${FFMPEG_ROOT}/bin ${FFMPEG_ROOT})
+    file(GLOB _matches "${_d}/*avformat*.dll" "${_d}/*avformat*.so*" "${_d}/*avformat*.dylib")
+    if(_matches)
+      list(GET _matches 0 _avformat_shared)
+      break()
+    endif()
+  endforeach()
+endif()
+if(NOT _avformat_shared)
   message(FATAL_ERROR
     "FFMPEG_ROOT=${FFMPEG_ROOT} has no shared libavformat (.so/.dylib/.dll). "
     "Rebuild ffmpeg-build with --enable-shared (scripts/build-android.sh / build-desktop.sh). "
@@ -114,5 +123,6 @@ target_include_directories(mseffmpegjni PRIVATE
 )
 
 if(WIN32 OR MINGW)
+  target_link_libraries(mseffmpegjni PRIVATE m pthread)
   set_target_properties(mseffmpegjni PROPERTIES PREFIX "")
 endif()

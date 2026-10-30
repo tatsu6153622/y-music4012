@@ -119,10 +119,17 @@ val stagePackedFfmpeg by tasks.registering(Copy::class) {
             rename { "mseffmpegjni.dll" }
             eachFile { path = name }
         }
+        from(project(":mse").layout.buildDirectory.dir("mse-jni")) {
+            include("mseffmpegjni.dll", "libmseffmpegjni.dll", "*mseffmpegjni*.dll")
+            rename { "mseffmpegjni.dll" }
+            eachFile { path = name }
+        }
         includeEmptyDirs = false
         into(stagedDir)
         doLast {
             val dir = stagedDir.get().asFile
+            println("=== Staged files in ${dir.absolutePath} ===")
+            dir.listFiles()?.forEach { println("  ${it.name} (${it.length()} bytes)") }
             val cli = dir.resolve(ffmpegPackedName)
             cli.setExecutable(true)
             val jni = dir.resolve(mseJniName)
