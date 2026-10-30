@@ -92,6 +92,19 @@ actual object MseHostNative {
     @JvmStatic
     external fun setVideoComponent(handle: Long, component: java.awt.Component?): Boolean
 
+        private fun preloadDependencies(dir: File) {
+        val order = listOf(
+            "libwinpthread", "libgcc", "libstdc",
+            "avutil", "swresample", "swscale",
+            "avcodec", "avformat", "avfilter", "avdevice"
+        )
+        for (prefix in order) {
+            dir.listFiles()?.filter { it.name.startsWith(prefix) && it.name.endsWith(".dll") }?.forEach {
+                runCatching { System.load(it.absolutePath) }
+            }
+        }
+    }
+
     private fun loadLibrary() {
         if (!loaded.compareAndSet(false, true)) return
         runCatching { System.loadLibrary("jawt") }
@@ -99,8 +112,10 @@ actual object MseHostNative {
         val libFileName = System.mapLibraryName(name)
         
         // 1. mse.native.dir プロパティがあれば優先ロード
-        System.getProperty("mse.native.dir")?.let { dir ->
+        System.getProperty("mse.native.dir")?.let { dirPath ->
+            val dir = File(dirPath)
             listOf(libFileName, "lib$libFileName").map { File(dir, it) }.firstOrNull { it.isFile }?.let {
+                preloadDependencies(dir)
                 System.load(it.absolutePath)
                 return
             }
@@ -121,7 +136,7 @@ actual object MseHostNative {
                 val f = File(cand, dllName)
                 if (f.isFile) {
                     try {
-                        System.load(f.absolutePath)
+                        preloadDependencies(cand); System.load(f.absolutePath)
                         return
                     } catch (_: Throwable) {}
                 }

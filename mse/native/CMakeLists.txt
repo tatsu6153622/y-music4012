@@ -124,5 +124,6 @@ target_include_directories(mseffmpegjni PRIVATE
 
 if(WIN32 OR MINGW)
   target_link_libraries(mseffmpegjni PRIVATE m pthread)
+  target_link_options(mseffmpegjni PRIVATE "-static-libgcc" "-static-libstdc++")
   set_target_properties(mseffmpegjni PROPERTIES PREFIX "")
 endif()
