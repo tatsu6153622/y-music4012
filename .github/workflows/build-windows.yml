@@ -108,17 +108,22 @@ jobs:
           cp -rn /mingw64/bin/sw*.dll "$PREFIX_DIR/bin/" 2>/dev/null || true
           cp -rn /mingw64/bin/ffmpeg.exe "$PREFIX_DIR/bin/" 2>/dev/null || true
 
-          # MinGW ランタイム DLL (libwinpthread, libgcc, libstdc++) を確実に同期
-          cp -rn /mingw64/bin/libwinpthread*.dll "$PREFIX_DIR/bin/" 2>/dev/null || true
-          cp -rn /mingw64/bin/libgcc*.dll "$PREFIX_DIR/bin/" 2>/dev/null || true
-          cp -rn /mingw64/bin/libstdc*.dll "$PREFIX_DIR/bin/" 2>/dev/null || true
-          cp -rn /mingw64/bin/libwinpthread*.dll "$PACK_DIR/" 2>/dev/null || true
-          cp -rn /mingw64/bin/libgcc*.dll "$PACK_DIR/" 2>/dev/null || true
-          cp -rn /mingw64/bin/libstdc*.dll "$PACK_DIR/" 2>/dev/null || true
-
-          # pack にも全バイナリを同期
+          # pack に全バイナリを同期
           cp -a "$PREFIX_DIR/bin/ffmpeg.exe" "$PACK_DIR/"
           cp -a "$PREFIX_DIR/bin/"*.dll "$PACK_DIR/" 2>/dev/null || true
+
+          # ntldd を使って、avcodec や ffmpeg が依存する全 DLL (libdav1d, zlib, libopus等) を再帰的に pack に全収集
+          pacman -S --noconfirm --needed mingw-w64-x86_64-ntldd
+          for pass in 1 2 3; do
+            for f in "$PACK_DIR"/*.dll "$PACK_DIR"/*.exe; do
+              ntldd -R "$f" 2>/dev/null | grep -i "mingw64" | awk '{print $3}' | while read -r dep; do
+                if [ -f "$dep" ]; then
+                  cp -u "$dep" "$PACK_DIR/" 2>/dev/null || true
+                  cp -u "$dep" "$PREFIX_DIR/bin/" 2>/dev/null || true
+                fi
+              done
+            done
+          done
 
           echo "=== Prefix include ==="
           ls -la "$PREFIX_DIR/include"

@@ -92,16 +92,23 @@ actual object MseHostNative {
     @JvmStatic
     external fun setVideoComponent(handle: Long, component: java.awt.Component?): Boolean
 
-        private fun preloadDependencies(dir: File) {
-        val order = listOf(
-            "libwinpthread", "libgcc", "libstdc",
-            "avutil", "swresample", "swscale",
-            "avcodec", "avformat", "avfilter", "avdevice"
-        )
-        for (prefix in order) {
-            dir.listFiles()?.filter { it.name.startsWith(prefix) && it.name.endsWith(".dll") }?.forEach {
-                runCatching { System.load(it.absolutePath) }
+    private fun preloadDependencies(dir: File) {
+        val dlls = dir.listFiles()?.filter { it.isFile && it.extension.equals("dll", ignoreCase = true) }
+            ?.map { it.absolutePath }?.filterNot { it.contains("mseffmpegjni", ignoreCase = true) }
+            ?: return
+        val remaining = dlls.toMutableList()
+        for (pass in 0 until 6) {
+            val iterator = remaining.iterator()
+            var loadedAny = false
+            while (iterator.hasNext()) {
+                val dll = iterator.next()
+                try {
+                    System.load(dll)
+                    iterator.remove()
+                    loadedAny = true
+                } catch (_: Throwable) {}
             }
+            if (!loadedAny) break
         }
     }
 
