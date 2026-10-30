@@ -220,7 +220,7 @@ val mseCmakeBuild by tasks.registering(Exec::class) {
     onlyIf { canBuildMseJni(logger) }
     inputs.dir(mseNativeSrc)
     outputs.dir(mseJniDir)
-    commandLine("cmake", "--build", mseJniDir.get().asFile.absolutePath, "-j", "4")
+    commandLine("cmake", "--build", mseJniDir.get().asFile.absolutePath, "-j", "4", "-v")
     doLast {
         // Siblings of libmseffmpegjni so @loader_path / $ORIGIN resolves in tests (mse.native.dir).
         val prefix = ffmpegDesktopPrefix ?: return@doLast

@@ -9,6 +9,9 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 #if defined(__APPLE__)
 #include <AudioToolbox/AudioToolbox.h>
@@ -1886,6 +1889,12 @@ static size_t phys_mib(void)
     if (sysctlbyname("hw.memsize", &mem, &len, NULL, 0) != 0 || mem == 0)
         return 8192;
     return (size_t)(mem / MSE_MIB);
+#elif defined(_WIN32)
+    MEMORYSTATUSEX status;
+    status.dwLength = sizeof(status);
+    if (GlobalMemoryStatusEx(&status))
+        return (size_t)(status.ullTotalPhys / MSE_MIB);
+    return 8192;
 #else
     long pages = sysconf(_SC_PHYS_PAGES);
     long psz = sysconf(_SC_PAGE_SIZE);
